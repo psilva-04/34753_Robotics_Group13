@@ -1,7 +1,53 @@
 import numpy as np
-from Problem3 import problem3_circle, dh_transform
 
 np.set_printoptions(precision=9, suppress=True)
+
+
+def dh_transform(q, d, a, alpha):
+    c, s = np.cos(q), np.sin(q)
+    ca, sa = np.cos(alpha), np.sin(alpha)
+
+    return np.array([
+        [c, -s*ca,  s*sa, a*c],
+        [s,  c*ca, -c*sa, a*s],
+        [0,    sa,    ca,   d],
+        [0,     0,     0,   1]
+    ])
+
+
+def problem3_circle():
+    # Joint configurations from Problem 3, Eqs. (12)-(19).
+    phi = 2 * np.pi * np.arange(37) / 36
+
+    x = np.full(37, 150.0)
+    y = 32.0 * np.cos(phi)
+    z = 120.0 + 32.0 * np.sin(phi)
+
+    points = np.column_stack((x, y, z))
+
+    q1 = np.arctan2(y, x)
+
+    rw = np.hypot(x, y) - 50.0
+    hw = z - 50.0
+
+    # Positive-q3 branch adopted in Problem 3.
+    q3 = np.arccos(
+        (rw**2 + hw**2 - 2*93.0**2)
+        / (2*93.0**2)
+    )
+
+    q2 = np.arctan2(hw, rw) - np.arctan2(
+        93.0 * np.sin(q3),
+        93.0 + 93.0 * np.cos(q3)
+    )
+
+    q4 = -q2 - q3
+
+    configurations = np.column_stack((q1, q2, q3, q4))
+
+    assert np.all(configurations[:, 2] > 0)
+
+    return phi, points, configurations
 
 
 def linear_jacobian(q):

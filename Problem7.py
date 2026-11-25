@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
@@ -13,7 +12,7 @@ def inverse_kinematics(phi):
     rho = np.hypot(150, y)
     a, b = rho - TOOL, z - H
 
-    q3 = -np.arccos(np.clip((a*a+b*b-2*L*L)/(2*L*L), -1, 1))
+    q3 = np.arccos(np.clip((a*a+b*b-2*L*L)/(2*L*L), -1, 1))
     q2 = np.arctan2(b, a) - np.arctan2(np.sin(q3), 1+np.cos(q3))
     q1 = np.arctan2(y, 150)
 
@@ -184,41 +183,59 @@ for method in ("Quintic", "Degree 7 + LS"):
               f"{rmse:12.6f} {maximum:11.6f} {accel:20.4f}")
 
 
-# Plot 1: Quintic with 5, 13 and 37 knots
-# Plot 2: Degree 7 with 5, 13 and 37 knots
+# Plots
+
+plt.rcParams.update({
+    'axes.labelsize': 22,
+    'xtick.labelsize': 18,
+    'ytick.labelsize': 18,
+    'legend.fontsize': 16,
+    'lines.linewidth': 2.2
+})
 
 phi = np.linspace(0, 2*np.pi, 1000)
 
-for method in ("Quintic", "Degree 7 + LS"):
+# Plot 1: Quintic with 5, 13 and 37 knots
 
-    plt.figure(figsize=(7, 7))
+plt.figure(figsize=(6, 6))
 
-    plt.plot(
-        R*np.cos(phi),
-        120+R*np.sin(phi),
-        'k--',
-        linewidth=2,
-        label='Ideal circle'
-    )
+plt.plot(R*np.cos(phi), 120+R*np.sin(phi),
+         'k--', label='Ideal circle')
 
-    for n in (5, 13, 37):
-        p = results[(method, n)][0]
+for n in (5, 13, 37):
+    p = results[("Quintic", n)][0]
+    plt.plot(p[:, 1], p[:, 2], label=f'{n} knots')
 
-        plt.plot(
-            p[:, 1],
-            p[:, 2],
-            label=f'{method} — {n} knots'
-        )
+plt.xlabel('y [mm]')
+plt.ylabel('z [mm]')
+plt.axis('equal')
+plt.grid(alpha=0.25)
+plt.legend()
+plt.tight_layout()
+plt.savefig("problem7_quintic_2D.png", dpi=600,
+            bbox_inches='tight')
+plt.close()
 
-    plt.xlabel('y [mm]')
-    plt.ylabel('z [mm]')
-    plt.title(f'Problem 7 — {method}')
-    plt.axis('equal')
-    plt.grid(alpha=0.25)
-    plt.legend()
-    plt.tight_layout()
 
-    name = "quintic" if method == "Quintic" else "degree7"
-    plt.savefig(f"problem7_{name}_2D.png", dpi=180)
+# Plot 2: Quintic vs Septic with 5 knots
 
-plt.show()
+plt.figure(figsize=(6, 6))
+
+plt.plot(R*np.cos(phi), 120+R*np.sin(phi),
+         'k--', label='Ideal circle')
+
+p = results[("Quintic", 5)][0]
+plt.plot(p[:, 1], p[:, 2], label='Quintic (5 knots)')
+
+p = results[("Degree 7 + LS", 5)][0]
+plt.plot(p[:, 1], p[:, 2], label='Septic (5 knots)')
+
+plt.xlabel('y [mm]')
+plt.ylabel('z [mm]')
+plt.axis('equal')
+plt.grid(alpha=0.25)
+plt.legend()
+plt.tight_layout()
+plt.savefig("problem7_degree7_2D.png", dpi=600,
+            bbox_inches='tight')
+plt.close()
